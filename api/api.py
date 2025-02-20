@@ -6,7 +6,7 @@ import os
 app = Flask(__name__)
 
 # Instagram Credentials
-INSTAGRAM_USERNAME = "harshiv_039"
+INSTAGRAM_USERNAME = "harshvi_039"
 INSTAGRAM_PASSWORD = "Ansh123@123"
 SESSION_FILE = "session.json"
 
