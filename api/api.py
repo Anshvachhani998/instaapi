@@ -1,8 +1,24 @@
 from flask import Flask, request, jsonify
-import instaloader
+from instagrapi import Client
 import requests
+import os
 
 app = Flask(__name__)
+
+# Instagram Credentials
+INSTAGRAM_USERNAME = "harshiv_039"
+INSTAGRAM_PASSWORD = "Ansh123@123"
+SESSION_FILE = "session.json"
+
+# Initialize Instagram Client
+cl = Client()
+
+# Try loading session to avoid frequent logins
+if os.path.exists(SESSION_FILE):
+    cl.load_settings(SESSION_FILE)
+else:
+    cl.login(INSTAGRAM_USERNAME, INSTAGRAM_PASSWORD)
+    cl.dump_settings(SESSION_FILE)  # Save session
 
 def clean_instagram_url(url: str) -> str:
     """Cleans Instagram URL by removing tracking parameters and replacing 'reel' with 'p'."""
@@ -17,25 +33,16 @@ def get_instagram_video():
         url = request.args.get("url")
         if not url:
             return jsonify({"status": "error", "message": "Missing 'url' parameter"}), 400
-        
+
         clean_url = clean_instagram_url(url)
         shortcode = clean_url.split("/")[-2]
 
-        # Initialize Instaloader
-        loader = instaloader.Instaloader(
-            download_comments=False,
-            download_geotags=False,
-            download_pictures=False,
-            download_video_thumbnails=False,
-            save_metadata=False
-        )
-
         # Fetch post details
-        post = instaloader.Post.from_shortcode(loader.context, shortcode)
+        media_info = cl.media_info_from_shortcode(shortcode)
 
-        if post.is_video:
-            video_url = post.video_url
-            title = post.caption.split("\n")[0] if post.caption else "No Title"
+        if media_info.video_url:
+            video_url = media_info.video_url
+            title = media_info.caption if media_info.caption else "No Title"
 
             # Get video file size
             response = requests.head(video_url)
@@ -50,6 +57,7 @@ def get_instagram_video():
             })
         else:
             return jsonify({"status": "error", "message": "This post does not contain a video."}), 400
-    
+
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
+
