@@ -4,21 +4,19 @@ import requests
 
 app = Flask(__name__)
 
-def get_video_url(ddinstagram_url):
+def get_redirected_url(ddinstagram_url):
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36"
     }
 
     try:
         response = requests.get(ddinstagram_url, headers=headers, allow_redirects=True)
-        if response.status_code != 200:
-            return None
 
-        # Extract direct video link from HTML response
-        match = re.search(r'property="og:video" content="(https://scontent[^"]+)"', response.text)
-        if match:
-            return match.group(1)
+        # Final redirected URL is the direct Instagram video link
+        final_url = response.url
 
+        if "scontent.cdninstagram.com" in final_url:
+            return final_url
         return None
 
     except Exception as e:
@@ -39,8 +37,8 @@ def convert_reel():
     reel_id = match.group(1)
     modified_url = f"https://www.ddinstagram.com/grid/{reel_id}"
 
-    # Fetch direct video link
-    video_url = get_video_url(modified_url)
+    # Get the final redirected URL (direct video link)
+    video_url = get_redirected_url(modified_url)
 
     if not video_url:
         return jsonify({"error": "Failed to fetch video link"}), 500
