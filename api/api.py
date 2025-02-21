@@ -22,30 +22,31 @@ def get_redirected_url(ddinstagram_url):
     except Exception as e:
         return None
 
+
 @app.route('/convert', methods=['GET'])
 def convert_reel():
     url = request.args.get('url')
 
     if not url:
-        return jsonify({"error": "Instagram Reels URL is required"}), 400
-
+        return jsonify({"error": "Instagram Reels, TV, or Post URL is required"}), 400
 
     match = re.search(r'/(reel|tv|p)/([^/?]+)', url)
-
     
     if not match:
-        return jsonify({"error": "Invalid Instagram Reels URL format"}), 400
+        return jsonify({"error": "Invalid Instagram URL format"}), 400
 
-    reel_id = match.group()
-    modified_url = f"https://www.ddinstagram.com/grid/{reel_id}"
+    content_id = match.group(2)  # Extract only the ID
+    modified_url = f"https://www.ddinstagram.com/grid/{content_id}"  # Corrected format
 
     # Get the final redirected URL (direct video link)
     video_url = get_redirected_url(modified_url)
 
     if not video_url:
-        return jsonify({"error": f"{modified_url} Failed to fetch video link"}), 500
+        return jsonify({"error": "Failed to fetch video link"}), 500
 
-    return jsonify({        
+    return jsonify({
         "dwn_url": video_url
     })
 
+if __name__ == "__main__":
+    app.run(debug=True)
