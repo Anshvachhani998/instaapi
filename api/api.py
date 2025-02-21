@@ -30,13 +30,13 @@ def convert_reel():
         return jsonify({"error": "Instagram Reels URL is required"}), 400
 
 
-    match = re.search(r'/(reel)/([^/?]+)', url)
+    match = re.search(r'/(reel|tv|p)/([^/?]+)', url)
 
     
     if not match:
         return jsonify({"error": "Invalid Instagram Reels URL format"}), 400
 
-    reel_id = match.group(1)
+    reel_id = match.group()
     modified_url = f"https://www.ddinstagram.com/grid/{reel_id}"
 
     # Get the final redirected URL (direct video link)
