@@ -30,7 +30,7 @@ def convert_reel():
         return jsonify({"error": "Instagram Reels URL is required"}), 400
 
 
-    match = re.search(r'/(reel|tv|p)/([^/?]+)', url)
+    match = re.search(r'/(reel)/([^/?]+)', url)
 
     
     if not match:
