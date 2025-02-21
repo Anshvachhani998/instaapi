@@ -1,63 +1,52 @@
 from flask import Flask, request, jsonify
-from instagrapi import Client
+import re
 import requests
-import os
 
 app = Flask(__name__)
 
-# Instagram Credentials
-INSTAGRAM_USERNAME = "harshvi_039"
-INSTAGRAM_PASSWORD = "Ansh123@123"
-SESSION_FILE = "session.json"
+def get_video_url(ddinstagram_url):
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36"
+    }
 
-# Initialize Instagram Client
-cl = Client()
-
-# Try loading session to avoid frequent logins
-if os.path.exists(SESSION_FILE):
-    cl.load_settings(SESSION_FILE)
-else:
-    cl.login(INSTAGRAM_USERNAME, INSTAGRAM_PASSWORD)
-    cl.dump_settings(SESSION_FILE)  # Save session
-
-def clean_instagram_url(url: str) -> str:
-    """Cleans Instagram URL by removing tracking parameters and replacing 'reel' with 'p'."""
-    url = url.split("?")[0]  # Remove URL parameters
-    url = url.replace("/reel/", "/p/")  # Convert Reel to Post URL
-    return url
-
-@app.route("/get_instagram_video", methods=["GET"])
-def get_instagram_video():
-    """Fetches the Instagram video URL, title, and size."""
     try:
-        url = request.args.get("url")
-        if not url:
-            return jsonify({"status": "error", "message": "Missing 'url' parameter"}), 400
+        response = requests.get(ddinstagram_url, headers=headers)
+        if response.status_code != 200:
+            return None
 
-        clean_url = clean_instagram_url(url)
-        shortcode = clean_url.split("/")[-2]
-
-        # Fetch post details
-        media_info = cl.media_info_from_shortcode(shortcode)
-
-        if media_info.video_url:
-            video_url = media_info.video_url
-            title = media_info.caption if media_info.caption else "No Title"
-
-            # Get video file size
-            response = requests.head(video_url)
-            size_bytes = int(response.headers.get("content-length", 0))
-            size_mb = size_bytes / (1024 * 1024)
-
-            return jsonify({
-                "status": "success",
-                "video_url": video_url,
-                "title": title,
-                "video_size_MB": round(size_mb, 2)
-            })
-        else:
-            return jsonify({"status": "error", "message": "This post does not contain a video."}), 400
+        # Extract direct video link from the HTML response
+        match = re.search(r'property="og:video" content="(.*?)"', response.text)
+        if match:
+            return match.group(1)
+        return None
 
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return None
+
+@app.route('/convert', methods=['GET'])
+def convert_reel():
+    url = request.args.get('url')
+
+    if not url:
+        return jsonify({"error": "Instagram Reels URL is required"}), 400
+
+    # Extract Reel ID from Instagram URL
+    match = re.search(r'/reel/([^/?]+)', url)
+    if not match:
+        return jsonify({"error": "Invalid Instagram Reels URL format"}), 400
+
+    reel_id = match.group(1)
+    modified_url = f"https://www.ddinstagram.com/grid/{reel_id}"
+
+    # Fetch direct video link
+    video_url = get_video_url(modified_url)
+
+    if not video_url:
+        return jsonify({"error": "Failed to fetch video link"}), 500
+
+    return jsonify({
+        "original_url": url,
+        "modified_url": modified_url,
+        "video_url": video_url
+    })
 
