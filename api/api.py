@@ -10,14 +10,15 @@ def get_video_url(ddinstagram_url):
     }
 
     try:
-        response = requests.get(ddinstagram_url, headers=headers)
+        response = requests.get(ddinstagram_url, headers=headers, allow_redirects=True)
         if response.status_code != 200:
             return None
 
-        # Extract direct video link from the HTML response
-        match = re.search(r'property="og:video" content="(.*?)"', response.text)
+        # Extract direct video link from HTML response
+        match = re.search(r'property="og:video" content="(https://scontent[^"]+)"', response.text)
         if match:
             return match.group(1)
+
         return None
 
     except Exception as e:
@@ -42,7 +43,7 @@ def convert_reel():
     video_url = get_video_url(modified_url)
 
     if not video_url:
-        return jsonify({"error": f"{reel_id}Failed to fetch video link"}), 500
+        return jsonify({"error": "Failed to fetch video link"}), 500
 
     return jsonify({
         "original_url": url,
