@@ -12,7 +12,7 @@ def get_redirected_url(ddinstagram_url):
     try:
         response = requests.get(ddinstagram_url, headers=headers, allow_redirects=True)
 
-        # Final redirected URL is the direct Instagram video link
+        
         final_url = response.url
 
         if "scontent.cdninstagram.com" in final_url:
@@ -29,8 +29,10 @@ def convert_reel():
     if not url:
         return jsonify({"error": "Instagram Reels URL is required"}), 400
 
-    # Extract Reel ID from Instagram URL
-    match = re.search(r'/reel/([^/?]+)', url)
+
+    match = re.search(r'/(reel|tv|p)/([^/?]+)', url)
+
+    
     if not match:
         return jsonify({"error": "Invalid Instagram Reels URL format"}), 400
 
