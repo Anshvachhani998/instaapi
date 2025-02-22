@@ -1,8 +1,13 @@
 from flask import Flask, request, jsonify
 import re
 import requests
+from instagrapi import Client as InstaClient
+import os
 
 app = Flask(__name__)
+
+INSTAGRAM_SESSION_FILE = "session.json"
+insta_client = InstaClient()
 
 def get_redirected_url(ddinstagram_url):
     headers = {
@@ -23,7 +28,7 @@ def get_redirected_url(ddinstagram_url):
         return None
 
 
-@app.route('/convert', methods=['GET'])
+@app.route('/api', methods=['GET'])
 def convert_reel():
     url = request.args.get('url')
 
@@ -47,6 +52,45 @@ def convert_reel():
     return jsonify({
         "dwn_url": video_url
     })
+
+
+
+
+# Load session if exists
+if os.path.exists(INSTAGRAM_SESSION_FILE):
+    insta_client.load_settings(INSTAGRAM_SESSION_FILE)
+else:
+    insta_client.login("loveis8507", "Ansh12345@23")
+    insta_client.dump_settings(INSTAGRAM_SESSION_FILE)
+
+
+@app.route("/profile", methods=["GET"])
+def get_profile():
+    username = request.args.get("username")
+    
+    if not username:
+        return jsonify({"error": "⚠️ Please provide a username"}), 400
+    
+    try:
+        user_info = insta_client.user_info_by_username(username)
+        profile_pic = user_info.profile_pic_url
+        bio = user_info.biography or "No bio available."
+        followers = user_info.follower_count
+        following = user_info.following_count
+
+        response_data = {
+            "username": username,
+            "bio": bio,
+            "followers": followers,
+            "following": following,
+            "profile_pic": profile_pic
+        }
+
+        return jsonify(response_data)
+    
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 
 if __name__ == "__main__":
     app.run(debug=True)
