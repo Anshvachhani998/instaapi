@@ -2,4 +2,4 @@ flask
 instaloader
 requests
 gunicorn
-instagrapi
+instagrapi>=1.16.30
