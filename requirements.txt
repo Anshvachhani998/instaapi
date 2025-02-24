@@ -1,5 +1,6 @@
 flask
 requests
 gunicorn
-instagrapi
+instagrapi>=1.16.30
+Pillow>=8.1.1
 pymongo
