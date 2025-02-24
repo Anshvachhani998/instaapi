@@ -36,7 +36,7 @@ def get_redirected_url(modified_url):
     }
 
     try:
-        response = requests.get(ddinstagram_url, headers=headers, allow_redirects=True)
+        response = requests.get(modified_url, headers=headers, allow_redirects=True)
 
         
         final_url = response.url
