@@ -108,7 +108,7 @@ def convert_reel():
     video_url = get_redirected_url(modified_url)
 
     if not video_url:
-        return jsonify({"error": "Failed to fetch video link"}), 500
+        return jsonify({"error": f"Failed to {content_id} fetch video link"}), 500
 
     return jsonify({
         "dwn_url": video_url
