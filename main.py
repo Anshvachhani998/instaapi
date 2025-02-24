@@ -30,6 +30,90 @@ else:
 
 
 
+def get_redirected_url(ddinstagram_url):
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36"
+    }
+
+    try:
+        response = requests.get(ddinstagram_url, headers=headers, allow_redirects=True)
+
+        
+        final_url = response.url
+
+        if "scontent.cdninstagram.com" in final_url:
+            return final_url
+        return None
+
+    except Exception as e:
+        return None
+
+@app.route("/")
+def home():
+    return """
+    <html>
+        <head>
+            <title>Instagram Media Downloader</title>
+            <style>
+                body { 
+                    font-family: Arial, sans-serif; 
+                    text-align: center; 
+                    padding: 50px;
+                    background-color: #f4f4f4;
+                }
+                .container {
+                    background: white;
+                    padding: 20px;
+                    border-radius: 10px;
+                    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+                    display: inline-block;
+                }
+                h1 {
+                    color: #6C63FF;
+                }
+                a {
+                    text-decoration: none;
+                    color: #ff007f;
+                    font-weight: bold;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <h1>📸 Instagram Media Downloader</h1>
+                <p>Fast & reliable API to fetch Instagram reels, posts, and stories.</p>
+                <p>Need help? Contact us: <a href="https://t.me/AnS_Bots" target="_blank">AnS_Bots</a></p>
+            </div>
+        </body>
+    </html>
+    """
+
+
+@app.route('/convert', methods=['GET'])
+def convert_reel():
+    url = request.args.get('url')
+
+    if not url:
+        return jsonify({"error": "Instagram Reels, TV, or Post URL is required"}), 400
+
+    match = re.search(r'/(reel|tv|p)/([^/?]+)', url)
+    
+    if not match:
+        return jsonify({"error": "Invalid Instagram URL format"}), 400
+
+    content_id = match.group(2)  # Extract only the ID
+    modified_url = f"https://www.ddinstagram.com/grid/{content_id}"  # Corrected format
+
+    # Get the final redirected URL (direct video link)
+    video_url = get_redirected_url(modified_url)
+
+    if not video_url:
+        return jsonify({"error": "Failed to fetch video link"}), 500
+
+    return jsonify({
+        "dwn_url": video_url
+    })
+    
 @app.route("/profile", methods=["GET"])
 def get_profile():
     username = request.args.get("username")
